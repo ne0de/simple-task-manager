@@ -48,7 +48,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "TaskManager"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Administrador de Tareas"))
         item = self.tableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "ID"))
         item = self.tableWidget.horizontalHeaderItem(1)
