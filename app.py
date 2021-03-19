@@ -1,5 +1,5 @@
-import sys, psutil, datetime
-from PyQt5.QtWidgets import QApplication, QDialog, QTableWidgetItem
+import sys, psutil, datetime, os
+from PyQt5.QtWidgets import QApplication, QDialog, QTableWidgetItem, QTableView, QMessageBox
 from TaskManagerDialog import Ui_MainWindow
 
 class TaskManagerApp(QDialog):
@@ -9,12 +9,24 @@ class TaskManagerApp(QDialog):
         self.ui.setupUi(self)
         self.ui.updateButton.clicked.connect(self.updateContent)
         self.ui.closeButton.clicked.connect(self.killProcess)
+        self.ui.dirButton.clicked.connect(self.getDirectory)
+        self.ui.tableWidget.setSelectionBehavior(QTableView.SelectRows)
+        self.ui.tableWidget.cellClicked.connect(self.selectProcess)
         self.today = datetime.date.today()
         self.initData()
         self.addContent()
         self.show()
     
     def initData(self): self.data = self.getAllProcess()
+
+    def showError(self, msg):
+        if msg == "AccessDenied": msg = msg + '\nIntenta ejecutar el programa como administrador'
+        QMessageBox.critical(self, 'Error', '- Tipo de error: ' + msg)
+    
+    def selectProcess(self, row, column):
+        pid = int(self.ui.tableWidget.item(row, 0).text())
+        self.currentlyProcessId = pid
+        self.ui.spinBox.setValue(pid)
 
     def setFormatTime(self, time):
         ctime = datetime.datetime.fromtimestamp(time)
@@ -36,17 +48,19 @@ class TaskManagerApp(QDialog):
                 temp.append((processId, processName, createTime))
         return temp
     
-    def getValueSpinBox(self):
-        number = self.ui.spinBox.text()
-        return int(number)
+    def getDirectory(self):
+        try:
+            path = psutil.Process(self.currentlyProcessId).cwd()
+            os.startfile(path)
+            self.updateContent()
+        except psutil.Error as error: self.showError(error.__class__.__name__)
     
     def killProcess(self):
-        pid = self.getValueSpinBox()
         try:
-            process = psutil.Process(pid)
+            process = psutil.Process(self.currentlyProcessId)
             process.terminate()
             self.updateContent()
-        except psutil.Error as error: print(str(error))
+        except psutil.Error as error: self.showError(error.__class__.__name__)
 
     def updateContent(self):
         self.ui.tableWidget.clearContents()
